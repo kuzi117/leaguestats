@@ -3,6 +3,8 @@ import datetime
 import copy
 import os
 
+file_path = 'file'
+
 class FileWrapper:
     """
     Implements useful functions for saving league of legends info.
@@ -11,16 +13,16 @@ class FileWrapper:
     """
     def __init__(self, debug = False):
         # Create folder if it doesn't exist
-        if not os.path.exists('json/'):
-            os.mkdir('json')
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
         
         # Refresh times (how long before cache is invalid)
-        self.summoner_valid_seconds = 24*60*60 # 1 day
-        self.games_valid_seconds = 30*60 # Half hour
+        self.valid_times = {'summoner': 24*60*60, # 1 day
+                            'games': 30*60} # Half hour
         
         # Saved values
-        self._summoners = _load_summoners(self.summoner_valid_seconds)
-        self._games = _load_recent_games(self.games_valid_seconds,
+        self._summoners = _load_summoners(self.valid_times['summoner'])
+        self._games = _load_recent_games(self.valid_times['games'],
                                          self._summoners)
     
     def close(self):
@@ -119,11 +121,11 @@ class FileWrapper:
         
 def _load_summoners(summoner_valid_seconds, debug=False):
     # If no file there's nothing to load
-    if not os.path.exists('json/summoners.json'):
+    if not os.path.exists(file_path + '/summoners.json'):
         return {}
     
     # Open the file and read with json lib
-    with open('json/summoners.json', 'r') as sum_file:
+    with open(file_path + '/summoners.json', 'r') as sum_file:
         loaded_sums = json.load(sum_file)
     
     # Prune old entries
@@ -159,16 +161,16 @@ def _load_summoners(summoner_valid_seconds, debug=False):
 
 def _save_summoners(summoners):
     # Truncate the original file
-    with open('json/summoners.json', 'w') as sum_file:
+    with open(file_path + '/summoners.json', 'w') as sum_file:
         json.dump(summoners, sum_file)
 
-def _load_recent_games(games_valid_seconds, sums, debug=False):
+def _load_recent_games(games_valid_seconds, debug=False):
         # If no file there's nothing to load
-    if not os.path.exists('json/recent_games.json'):
+    if not os.path.exists(file_path + '/recent_games.json'):
         return {}
     
     # Open the file and read with json lib
-    with open('json/recent_games.json', 'r') as game_file:
+    with open(file_path + '/recent_games.json', 'r') as game_file:
         loaded_recents = json.load(game_file)
     
     # Prune old entries
@@ -184,8 +186,8 @@ def _load_recent_games(games_valid_seconds, sums, debug=False):
             
             # Notify if debug is on
             if debug:
-                print('PRUNING ID {}({}) FROM SAVED SUMS'
-                       .format(sumid, sums[sumid]['name']))
+                print('PRUNING ID {} FROM SAVED GAMES'
+                       .format(sumid))
             
             # Save the id for deletion
             removes.append(sumid)
@@ -205,5 +207,5 @@ def _load_recent_games(games_valid_seconds, sums, debug=False):
 
 def _save_recent_games(games):
     # Truncate the original file
-    with open('json/recent_games.json', 'w') as game_file:
+    with open(file_path + '/recent_games.json', 'w') as game_file:
         json.dump(games, game_file)
