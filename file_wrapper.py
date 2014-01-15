@@ -16,7 +16,7 @@ class FileWrapper:
         
         # Refresh times (how long before cache is invalid)
         self.summoner_valid_seconds = 24*60*60 # 1 day
-        self.games_valid_seconds = 10 # Half hour
+        self.games_valid_seconds = 30*60 # Half hour
         
         # Saved values
         self._summoners = _load_summoners(self.summoner_valid_seconds)
