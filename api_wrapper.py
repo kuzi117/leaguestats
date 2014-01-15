@@ -112,7 +112,7 @@ def get_recent_games(sumid, force_reload=False):
             
         return file_result
     
-    result = _get(1.2, 'game/by-summoner/{}/recent'.format(sumid))
+    result = _get(1.3, 'game/by-summoner/{}/recent'.format(sumid))
     
     # Notify user on HTTP error codes
     if type(result) == int:
