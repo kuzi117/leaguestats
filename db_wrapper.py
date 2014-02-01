@@ -1,11 +1,16 @@
+from util import Singleton
+
 import sqlite3
 
 file_path = 'file'
 dbg_str = 'DEBUG: '
 
-class DBWrapper():
+class DBWrapper(metaclass=Singleton):
     """
-    Class to wrap an SQLite db for stats storing.
+    Class to wrap an SQLite db.
+    
+    This class only defines useful methods for interacting with the
+    database. Ways to use these methods must be defined elsewhere.
     """
     
     def __init__(self, **args):
@@ -65,11 +70,13 @@ class DBWrapper():
             return True
         else:
             return False
-        
 
     def create_table(self, name, field_names, field_types, primary_name):
         """
         Creates a table.
+        
+        Doesn't do fancy injection prevention because table names can't
+        be paramaterized.
         """
         # Ensure that all fields are typed
         if len(field_types) != len(field_names):
@@ -80,23 +87,28 @@ class DBWrapper():
             raise AssertionError('Primary name not in field names!')
         
         # Create statment
-        stmt = ('CREATE TABLE ? ('
+        stmt = ('CREATE TABLE {} ('
                 '{}'
-                'PRIMARY KEY (?))')
-        stmt= stmt.format('? ?,' * len(field_names))
+                'PRIMARY KEY ({}))')
+        
+        # Format the table name, field format spaces and primary name
+        stmt= stmt.format(name,
+                          '{} {},' * len(field_names),
+                          primary_name)
         
         # Create symbols list for formatting
-        symbols = [name]
+        symbols = []
         
         for i in range(len(field_names)):
-            symbols += [field_types[i]]
-            symbols += [field_names[i]]
+            symbols += [field_names[i], field_types[i]]
         
-        symbols += [primary_name]
+        # Format the field names and types
+        stmt = stmt.format(*symbols)
         
         curs = self.conn.cursor()
         
-        curs.execute(stmt, symbols)
+        curs.execute(stmt)
         
         curs.close()
+    
     
