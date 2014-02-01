@@ -1,30 +1,42 @@
-import api_wrapper as api
+import request_manager
+import stat_manager
+from util import dbg_str
 
 import sys
 
-def main(debug):
-    api.debug = debug
-    api.files.debug = debug
+def main(debug = False):
     
+    # Managers
+    stats = stat_manager.StatManager(debug = debug)
+    reqs = request_manager.RequestManager(debug = debug)
+    
+    try:
+        while True:
+            test(reqs)
+    except (KeyboardInterrupt, SystemExit) as e:
+        print('\nClosing up shop...')
+        reqs.exit()
+        stats.exit()
+        print('Bye bye!')
+        raise
+    except EOFError as e:
+        print('\nClosing without saving... :(')
+        raise
+    
+    reqs.exit()
+    stats.exit()
+    
+def test(reqs):
+    """
+    Function for testing functionality.
+    """
     name = input('Name: ')
     if name == 'exit':
         sys.exit()
     
-    result = api.get_summoner_by_name(name)
-    result = api.get_recent_games(result['id'])
-    print([i for i in result['games'].pop()])
-    
-    return
-    api.files.close()
+    summoner = reqs.sum_by_name(name, 'na')
+    print(summoner)
     
 if __name__ == '__main__':
     debug = True
-    try:
-        while True:
-            main(debug)
-    except (KeyboardInterrupt, SystemExit) as e:
-        print('\nClosing up shop...')
-        api.files.close()
-        print('Bye bye!')
-    except EOFError as e:
-        print('\nClosing without saving... :(')
+    main(debug)
