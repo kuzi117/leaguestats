@@ -73,6 +73,10 @@ def _get(region, version, url, payload={}, **args):
         return GENERIC_ERROR
 
 class APIWrapper(metaclass=Singleton):
+    """
+    A wrapper for Riot's developer API.
+    """
+    
     def __init__(self, **args):
         # Default things
         self.debug = args.get('debug', False)
