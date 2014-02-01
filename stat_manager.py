@@ -1,6 +1,5 @@
 import db_wrapper
-
-dbg_str = 'DEBUG: '
+from util import dbg_str
 
 class StatManager():
     def __init__(self, debug = False):
@@ -12,4 +11,4 @@ class StatManager():
         """
         Prepares for exit.
         """
-        self.db.close()
+        self.db.exit()
