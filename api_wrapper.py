@@ -1,6 +1,9 @@
 from util import dbg_str
 from util import base_url
 from util import key
+from util import Singleton
+
+import requests as reqs
 
 GENERIC_ERROR = 0
 NOT_FOUND = 1
@@ -17,7 +20,7 @@ def _get(region, version, url, payload={}, **args):
     url = base_url.format(region, version) + url
     
     # Print URL if debug is on
-    if debug:
+    if args.get('debug', False):
         print(dbg_str + 'REQUEST URL: ' + url)
     payload['api_key'] = key
 
@@ -69,7 +72,7 @@ def _get(region, version, url, payload={}, **args):
                     .format(r.status_code))
         return GENERIC_ERROR
 
-class APIWrapper:
+class APIWrapper(metaclass=Singleton):
     def __init__(self, **args):
         # Default things
         self.debug = args.get('debug', False)
@@ -103,7 +106,7 @@ class APIWrapper:
         else:
             return result
             
-    def get_recent_games(sumid, force_reload=False):
+    def recent_games(self, sumid, region):
         """
         Gets recent games by summoner id.
         """
