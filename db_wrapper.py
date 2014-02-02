@@ -111,4 +111,70 @@ class DBWrapper(metaclass=Singleton):
         
         curs.close()
     
+    def select_values(self, table, col_names, conditions):
+        """
+        Selects values from a table.
+        Row_names is a list of strings that name a row in the table.
+        Conditions is a list of strings already in the form of a valid
+        SQL condition (e.g. "col_name = 100").
+        """
+        if conditions:
+            cond_str = '{}' + ' AND {}' * (len(conditions) -1)
+            col_str = '{}' + ', {}' * (len(col_names) -1)
+            
+            # Format table name and extra format strings
+            stmt = ('SELECT {} '
+                    'FROM {} '
+                    'WHERE {}').format(col_str, table, cond_str)
+            
+            # Format the names and conditions into the new format strings
+            stmt = stmt.format(*(col_names + conditions))
+            
+        else:
+            cond_str = '{}' + ' AND {}' * (len(conditions) -1)
+            
+            # Format table name and condition format string
+            stmt = ('SELECT {} '
+                    'FROM {}').format(cond_str, table)
+            
+            # Format conditions into format string
+            stmt = stmt.format(*conditions)
+        
+        if self.debug:
+            print(dbg_str + 'Select statement: {}'.format(stmt))
+        
+        # Get cursor and execute the statement
+        curs = self.conn.cursor()
+        curs.execute(stmt)
+        
+        # Return all results
+        return curs.fetchall()
     
+    def insert_values(self, table, values):
+        """
+        Inserts values into a table.
+        
+        Values is a list of tuples of the values for each row.
+        """
+        vals_str = ''
+        for val in values:
+            # Create and format the string for each set of values to
+            # insert
+            val_str = '(' + '{}' + ', {}' * (len(val) -1) + ')'
+            val_str = val_str.format(*val)
+            
+            # Append to list of sets of values
+            vals_str += val_str + ', '
+        
+        vals_str = vals_str[:-2] # Drop the last ', '
+            
+        stmt = ('INSERT OR REPLACE INTO {} '
+                'VALUES {}').format(table, vals_str)
+        
+        print(dbg_str + 'Insert statement: {}'.format(stmt))
+        
+        # Execute the statement
+        curs = self.conn.cursor()
+        curs.execute(stmt)
+        self.conn.commit()
+        curs.close()
