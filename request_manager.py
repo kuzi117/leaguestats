@@ -2,6 +2,7 @@ import api_wrapper as api
 import file_wrapper as files
 import data_manager as data
 from util import Singleton
+from util import dbg_str
 
 class RequestManager(metaclass=Singleton):
     def __init__(self, **args):
@@ -20,8 +21,41 @@ class RequestManager(metaclass=Singleton):
         self.filew.exit()
         self.datam.exit()
     
-    def sum_by_name(self, name, region):
-        return self.apiw.sum_by_name(name, region)
+    def summoner_by_name(self, name, region):
+        """
+        Request a summoner by name.
+        
+        Checks with the data manager before requesting from the server.
+        """
+        # Make sure summoner name is acceptable
+        if name in [None, ''] or type(name) != str:
+            if self.debug:
+               print(dbg_str + 'Bad summoner name.')
+            return None
+        
+        summoner = self.datam.summoner_by_name(name, region)
+        
+        # If the summoner was cached locally then return it
+        if summoner: return summoner
+        
+        # Request from server
+        summoners = self.apiw.summoner_by_name(name, region)
+        
+        if summoners:
+            # Convert to a list the dict is useless here
+            summoners = [summoners[x] for x in summoners]
+            
+            # Save the results of the server request
+            self.datam.save_summoners(summoners)
+            
+            if self.debug and len(summoners) > 1:
+                print(wrn_str + 'More than one summoner returned on '
+                        'single request!')
+            
+            return summoners.pop() # Return first in list
+        
+        else:
+            return None
     
     def recent_games(self, sumid, region):
         return self.apiw.recent_games(sumid, region)
