@@ -81,21 +81,16 @@ class APIWrapper(metaclass=Singleton):
         # Default things
         self.debug = args.get('debug', False)
     
-    def sum_by_name(self, name, region):
+    def summoner_by_name(self, name, region):
         """
         Returns summoner object by name, or None if the couldn't be
         found or if another error occurs.
         """
-        if name == None or type(name) != str:
-            if self.debug:
-               print(dbg_str + 'Bad summoner name.')
-            return None
-        
         result = _get(region, 1.3, 'summoner/by-name/{}'.format(name),
                         debug = self.debug)
         
         if result == NOT_FOUND:
-            print('That name couldn\'nt be found on this server.')
+            print('That name could\'nt be found on this server.')
             return None
         elif result == CLIENT_ERROR:
             print('There was a client error requesting the summoner.')
@@ -108,6 +103,9 @@ class APIWrapper(metaclass=Singleton):
             print('An unkown error occured. Try again later?')
             return None
         else:
+            if self.debug:
+                print(dbg_str + 'Summoners from server: {}'.format(result))
+            
             return result
             
     def recent_games(self, sumid, region):
