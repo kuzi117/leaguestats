@@ -1,5 +1,6 @@
 # String constants
 dbg_str = 'DEBUG: '
+wrn_str = 'WARNING: '
 base_url = 'https://prod.api.pvp.net/api/lol/{}/v{}/' # region, v. num.
 key = 'b327abf7-c1ef-4b97-acce-5528d97d1437'
 
