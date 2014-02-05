@@ -131,14 +131,14 @@ class DBWrapper(metaclass=Singleton):
             stmt = stmt.format(*(col_names + conditions))
             
         else:
-            cond_str = '{}' + ' AND {}' * (len(conditions) -1)
+            col_str = '{}' + ', {}' * (len(col_names) -1)
             
             # Format table name and condition format string
             stmt = ('SELECT {} '
-                    'FROM {}').format(cond_str, table)
+                    'FROM {}').format(col_str, table)
             
             # Format conditions into format string
-            stmt = stmt.format(*conditions)
+            stmt = stmt.format(*col_names)
         
         if self.debug:
             print(dbg_str + 'Select statement: {}'.format(stmt))
@@ -148,7 +148,10 @@ class DBWrapper(metaclass=Singleton):
         curs.execute(stmt)
         
         # Return all results
-        return curs.fetchall()
+        rows = curs.fetchall()
+        curs.close()
+        
+        return rows
     
     def insert_values(self, table, values):
         """
@@ -178,3 +181,32 @@ class DBWrapper(metaclass=Singleton):
         curs.execute(stmt)
         self.conn.commit()
         curs.close()
+
+    def delete_values(self, table, conditions):
+        """
+        Deletes values from table using conditions
+        """
+        
+        if conditions:
+            cond_str = '{}' + ' AND {}' * (len(conditions) -1)
+            
+            # Format table name and extra format strings
+            stmt = ('DELETE FROM {} '
+                    'WHERE {}').format(table, cond_str)
+            
+            # Format the conditions into the new format string
+            stmt = stmt.format(*conditions)
+            
+        else:
+            # Format table name format string
+            stmt = ('DELETE FROM {}').format(table)
+        
+        if self.debug:
+            print(dbg_str + 'Delete statement: {}'.format(stmt))
+        
+        # Get cursor and execute the statement
+        curs = self.conn.cursor()
+        curs.execute(stmt)
+        
+        # Commit
+        self.conn.commit()
