@@ -1,6 +1,8 @@
 from util import Singleton, dbg_str
 import db_wrapper
 
+import datetime
+
 class DataManager(metaclass=Singleton):
     """
     Class to manage data like summoners, recent games, etc.
@@ -11,10 +13,14 @@ class DataManager(metaclass=Singleton):
         # Database handle
         self.db = db_wrapper.DBWrapper(debug = self.debug)
         
+        # How long should we cache for?
+        self.summoner_expire_sec = 60 # 1 day
+        
         if not self.db.table_exists('summoners'):
             self.setup_summoners()
         elif self.debug:
             print(dbg_str + 'Summoners table already setup.')
+            self.prune_summoners()
     
     def exit(self):
         """
@@ -30,7 +36,7 @@ class DataManager(metaclass=Singleton):
         name = name.lower().replace(' ', '')
         rows = self.db.select_values('summoners',
                                      ['*'],
-                                     ['standard_name like \'{}\''
+                                     ['standardName like \'{}\''
                                      .format(name)])
         if rows:
             # Drop the cache date and standardized name from the end of 
@@ -90,7 +96,7 @@ class DataManager(metaclass=Singleton):
                  'summonerLevel',
                  'profileIconId',
                  'revisionDate',
-                 'standard_name',
+                 'standardName',
                  'cacheDate')
         types = ('integer',
                  'text',
@@ -101,3 +107,44 @@ class DataManager(metaclass=Singleton):
                  'integer')
         
         self.db.create_table('summoners', names, types, 'id')
+    
+    ### Clean up functions
+    def prune_summoners(self):
+        """
+        Cleans up the summoners table by removing old entries older than
+        a supplied time.
+        """
+        # Select all summoners
+        rows = self.db.select_values('summoners',
+                                     ['standardName', 'cacheDate'],
+                                     [])
+        
+        # If nothing to prune, quit
+        if not rows:
+            return
+        
+        # Convert second string to date
+        rows = [(name, datetime.datetime.strptime(dt_str, 
+                                                  '%Y-%m-%d %H:%M:%S'))
+                for (name, dt_str) in rows]
+        
+        now = datetime.datetime.now()
+        remove = []
+        for name, date in rows:
+            if (now - date).total_seconds() > self.summoner_expire_sec:
+                remove.append(name)
+        
+        if not remove:
+            return
+        elif len(remove) == 1:
+            self.db.delete_values('summoners',
+                                  ['standardName in {}'
+                                    .format('\'{}\''.format(remove[0]))
+                              ])
+        else:
+            self.db.delete_values('summoners',
+                                  ['standardName in {}'
+                                    .format(tuple(remove))
+                                  ])
+        
+        
