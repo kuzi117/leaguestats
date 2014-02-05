@@ -21,10 +21,6 @@ def main(debug = False):
         raise
     except EOFError as e:
         print('\nClosing without saving... :(')
-        raise
-    
-    reqs.exit()
-    stats.exit()
     
 def test(reqs):
     """
@@ -32,10 +28,12 @@ def test(reqs):
     """
     name = input('Name: ')
     if name == 'exit':
-        sys.exit()
+        sys.exit(0)
     
-    summoner = reqs.sum_by_name(name, 'na')
-    print(summoner)
+    summoner = reqs.summoner_by_name(name, 'na')
+    print('\nRESULTS: {}'.format(summoner))
+    
+    print('\n\n')
     
 if __name__ == '__main__':
     debug = True
