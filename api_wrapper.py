@@ -90,7 +90,7 @@ class APIWrapper(metaclass=Singleton):
                         debug = self.debug)
         
         if result == NOT_FOUND:
-            print('That name could\'nt be found on this server.')
+            print('That name couldn\'t be found on this server.')
             return None
         elif result == CLIENT_ERROR:
             print('There was a client error requesting the summoner.')
