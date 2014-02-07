@@ -81,32 +81,32 @@ class APIWrapper(metaclass=Singleton):
         # Default things
         self.debug = args.get('debug', False)
     
-    def summoner_by_name(self, name, region):
+    def summoners_by_name(self, names, region):
         """
-        Returns summoner object by name, or None if the couldn't be
-        found or if another error occurs.
+        Gets multiple summoners specified by list of names
+
+        Returns a Dict with summoner info in it.
         """
-        result = _get(region, 1.3, 'summoner/by-name/{}'.format(name),
-                        debug = self.debug)
-        
-        if result == NOT_FOUND:
-            print('That name couldn\'t be found on this server.')
-            return None
-        elif result == CLIENT_ERROR:
-            print('There was a client error requesting the summoner.')
-            return None
-        elif result == SERVER_ERROR:
-            print('There was a server error requesting the summoner. '
-                   'Try again later?')
-            return None
-        elif result == GENERIC_ERROR:
-            print('An unkown error occured. Try again later?')
+        # Create format string for names and format the names into it
+        name_str = "{}" + (",{}" * (len(names)-1))
+        name_str = name_str.format(*names)
+
+        result = _get(region, 1.3, 'summoner/by-name/{}'.format(name_str), debug = self.debug)
+
+        if result in [NOT_FOUND, CLIENT_ERROR, SERVER_ERROR, GENERIC_ERROR]:
             return None
         else:
             if self.debug:
                 print(dbg_str + 'Summoners from server: {}'.format(result))
-            
+
             return result
+
+    def summoner_by_name(self, name, region):
+        """
+        Gets a summoner by name. Delegates to summoners_by_name.
+        Returns the same way as summoner by name.
+        """
+        return self.summoners_by_name([name], region)
             
     def recent_games(self, sumid, region):
         """
@@ -119,7 +119,7 @@ class APIWrapper(metaclass=Singleton):
         result = _get(1.3, 'game/by-summoner/{}/recent'.format(sumid))
         
         if result == NOT_FOUND:
-            print('That name couldn\'nt be found on this server.')
+            print('That name couldn\'t be found on this server.')
             return None
         elif result == CLIENT_ERROR:
             print('There was a client error requesting recent games.')
