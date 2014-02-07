@@ -27,36 +27,47 @@ class DataManager(metaclass=Singleton):
         Prepares for exit.
         """
         self.db.exit()
-    
-    def summoner_by_name(self, name, region):
+
+    ### Get functions
+    def summoners_by_name(self, names, region):
         """
-        Gets a summoner by name from the database. Returns only a single
-        summoner.
+        Gets summoners by list of standardized names from the database. Returns as many
+        summoners as can be found.
         """
-        name = name.lower().replace(' ', '')
+        # Create format string for names and format the names into it
+        name_str = '(' + '{}' + ('\', {}\'' * (len(names)-1)) + ')'
+        name_str = name_str.format(*names)
+
         rows = self.db.select_values('summoners',
                                      ['*'],
-                                     ['standardName like \'{}\''
-                                     .format(name)])
+                                     ['standardName in {}'
+                                     .format(name_str)])
+
         if rows:
             # Drop the cache date and standardized name from the end of 
             # the result so it's like riot's result
-            rows = [
-                {'id': x[0],
-                 'name': x[1],
-                 'summonerLevel': x[2],
-                 'profileIconId': x[3],
-                 'revisionDate': x[4]
-                    }
-                     for x in rows]
+            rows = {x[1]:
+                    {'id': x[0],
+                    'name': x[1],
+                    'summonerLevel': x[2],
+                    'profileIconId': x[3],
+                    'revisionDate': x[4]
+                    } for x in rows}
                      
             if self.debug:
                 print(dbg_str + 'Summoners from db: {}'.format(rows))
             
-            return rows[0]
+            return rows
         else:
             return None
-    
+
+    def summoner_by_name(self, name, region):
+        """
+        Gets a summoner by name. Delegates to summoners_by_name.
+        Returns the same way as summoner by name.
+        """
+        return self.summoners_by_name([name], region)
+
     ### Save functions
     def save_summoners(self, summoners):
         """
