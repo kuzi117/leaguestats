@@ -1,8 +1,6 @@
 import api_wrapper as api
-import file_wrapper as files
 import data_manager as data
-from util import Singleton
-from util import dbg_str
+from util import Singleton, dbg_str, wrn_str
 
 class RequestManager(metaclass=Singleton):
     def __init__(self, **args):
@@ -11,14 +9,12 @@ class RequestManager(metaclass=Singleton):
         
         # Wrappers to request from
         self.apiw = api.APIWrapper(debug = self.debug)
-        self.filew = files.FileWrapper(debug = self.debug)
         self.datam = data.DataManager(debug = self.debug)
     
     def exit(self):
         """
         Prepares for exit.
         """
-        self.filew.exit()
         self.datam.exit()
     
     def summoner_by_name(self, name, region):
@@ -46,7 +42,7 @@ class RequestManager(metaclass=Singleton):
             summoners = [summoners[x] for x in summoners]
             
             # Save the results of the server request
-            self.datam.save_summoners(summoners)
+            self.datam.save_summoners(summoners, region)
             
             if self.debug and len(summoners) > 1:
                 print(wrn_str + 'More than one summoner returned on '
