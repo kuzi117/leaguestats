@@ -1,21 +1,27 @@
-from util import Singleton
+from util import dbg_str, DatabaseSingleton
 
 import sqlite3
+import os
 
-file_path = 'file'
-dbg_str = 'DEBUG: '
-
-class DBWrapper(metaclass=Singleton):
+class DBWrapper(metaclass=DatabaseSingleton):
     """
     Class to wrap an SQLite db.
     
     This class only defines useful methods for interacting with the
     database. Ways to use these methods must be defined elsewhere.
+
+    name should be the database name excluding '.db'
     """
     
-    def __init__(self, **args):
+    def __init__(self, name, **args):
         self.debug = args.get('debug', False)
-        self.conn = sqlite3.connect(file_path + '/stats.db')
+
+        # Create db filepath
+        self.filepath = args.get('filepath', 'file') + os.path.sep
+        if not os.path.exists(self.filepath):
+            os.makedirs(self.filepath)
+
+        self.conn = sqlite3.connect(self.filepath + os.path.sep + name + '.db')
     
     def exit(self):
         """
@@ -81,15 +87,16 @@ class DBWrapper(metaclass=Singleton):
         # Ensure that all fields are typed
         if len(field_types) != len(field_names):
             raise AssertionError('Field types length doesn\'t match '
-                                  ' field names length!')
+                                  ' field names length!\n{}\n{}'.format(field_types, field_names))
         # Ensure that primary field is there
-        elif primary_name not in field_names:
+        elif False in [(x in field_names) for x in primary_name.split(', ')]:
             raise AssertionError('Primary name not in field names!')
         
         # Create statment
         stmt = ('CREATE TABLE {} ('
                 '{}'
                 'PRIMARY KEY ({}))')
+
         
         # Format the table name, field format spaces and primary name
         stmt= stmt.format(name,
@@ -104,6 +111,9 @@ class DBWrapper(metaclass=Singleton):
         
         # Format the field names and types
         stmt = stmt.format(*symbols)
+
+        if self.debug:
+            print(dbg_str + 'Create statement: {}'.format(stmt))
         
         curs = self.conn.cursor()
         
