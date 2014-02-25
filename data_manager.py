@@ -11,12 +11,13 @@ class DataManager(metaclass=Singleton):
         self.debug = args.get('debug', False)
         
         # Database handle
-        self.db = db_wrapper.DBWrapper(debug = self.debug)
+        self.stat_db = db_wrapper.DBWrapper('stats',
+                                            debug = self.debug)
         
         # How long should we cache for?
         self.summoner_expire_sec = 60 # 1 day
         
-        if not self.db.table_exists('summoners'):
+        if not self.stat_db.table_exists('summoners'):
             self.setup_summoners()
         elif self.debug:
             print(dbg_str + 'Summoners table already setup.')
@@ -26,7 +27,7 @@ class DataManager(metaclass=Singleton):
         """
         Prepares for exit.
         """
-        self.db.exit()
+        self.stat_db.exit()
 
     ### Get functions
     def summoners_by_name(self, names, region):
@@ -35,13 +36,13 @@ class DataManager(metaclass=Singleton):
         summoners as can be found.
         """
         # Create format string for names and format the names into it
-        name_str = '(' + '{}' + ('\', {}\'' * (len(names)-1)) + ')'
+        name_str = '(' + '\'{}\'' + (', \'{}\'' * (len(names)-1)) + ')'
         name_str = name_str.format(*names)
 
-        rows = self.db.select_values('summoners',
-                                     ['*'],
-                                     ['standardName in {}'
-                                     .format(name_str)])
+        rows = self.stat_db.select_values('summoners',
+                                          ['*'],
+                                          ['standardName in {}'
+                                          .format(name_str)])
 
         if rows:
             # Drop the cache date and standardized name from the end of 
@@ -69,7 +70,7 @@ class DataManager(metaclass=Singleton):
         return self.summoners_by_name([name], region)
 
     ### Save functions
-    def save_summoners(self, summoners):
+    def save_summoners(self, summoners, region):
         """
         Saves summoners to the database. 
         Expects summoners to be a list of SummonerDto.
@@ -85,14 +86,15 @@ class DataManager(metaclass=Singleton):
             val_list.append(summoner['profileIconId'])
             val_list.append(summoner['revisionDate'])
                             
-            # Add cache date and standardized name
+            # Add region, cache date and standardized name
+            val_list.append('\'{}\''.format(region))
             val_list.append('\'{}\''.format(summoner['name']
                                 .lower().replace(' ', '')))
             val_list.append('datetime(\'now\')')
             
             values.append(tuple(val_list))
         
-        self.db.insert_values('summoners', values)
+        self.stat_db.insert_values('summoners', values)
         
     ### Setup functions
     def setup_summoners(self):
@@ -107,6 +109,7 @@ class DataManager(metaclass=Singleton):
                  'summonerLevel',
                  'profileIconId',
                  'revisionDate',
+                 'region',
                  'standardName',
                  'cacheDate')
         types = ('integer',
@@ -115,9 +118,10 @@ class DataManager(metaclass=Singleton):
                  'integer',
                  'integer',
                  'text',
+                 'text',
                  'integer')
         
-        self.db.create_table('summoners', names, types, 'id')
+        self.stat_db.create_table('summoners', names, types, 'id, region')
     
     ### Clean up functions
     def prune_summoners(self):
@@ -126,9 +130,9 @@ class DataManager(metaclass=Singleton):
         a supplied time.
         """
         # Select all summoners
-        rows = self.db.select_values('summoners',
-                                     ['standardName', 'cacheDate'],
-                                     [])
+        rows = self.stat_db.select_values('summoners',
+                                          ['standardName', 'cacheDate'],
+                                          [])
         
         # If nothing to prune, quit
         if not rows:
@@ -148,14 +152,14 @@ class DataManager(metaclass=Singleton):
         if not remove:
             return
         elif len(remove) == 1:
-            self.db.delete_values('summoners',
-                                  ['standardName in {}'
-                                    .format('\'{}\''.format(remove[0]))
-                              ])
+            self.stat_db.delete_values('summoners',
+                                       ['standardName in {}'
+                                        .format('\'{}\''.format(remove[0]))
+                                       ])
         else:
-            self.db.delete_values('summoners',
-                                  ['standardName in {}'
-                                    .format(tuple(remove))
-                                  ])
+            self.stat_db.delete_values('summoners',
+                                       ['standardName in {}'
+                                        .format(tuple(remove))
+                                       ])
         
         
