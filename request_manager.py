@@ -37,10 +37,12 @@ class RequestManager(metaclass = Singleton):
 
         summoners = self.datam.summoners_by_name(names, region)
 
-        # If we already found a summoner remove them from the need to find list
-        for name in names:
-            if name in summoners:
-                names.remove(name)
+        # If we didn't find anything move on
+        if summoners:
+            # If we already found a summoner remove them from the need to find list
+            for name in names:
+                if name in summoners:
+                    names.remove(name)
 
         # If names left to find then request from server
         if names:
@@ -67,5 +69,6 @@ class RequestManager(metaclass = Singleton):
 
     def recent_games(self, sumid, region):
         return self.apiw.recent_games(sumid, region)
+
     
         
