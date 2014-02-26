@@ -163,7 +163,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         
         return rows
     
-    def insert_values(self, table, values, ignore=false):
+    def insert_values(self, table, values, ignore=False):
         """
         Inserts values into a table.
         
