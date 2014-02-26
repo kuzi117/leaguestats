@@ -163,7 +163,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         
         return rows
     
-    def insert_values(self, table, values):
+    def insert_values(self, table, values, ignore=false):
         """
         Inserts values into a table.
         
@@ -180,9 +180,13 @@ class DBWrapper(metaclass=DatabaseSingleton):
             vals_str += val_str + ', '
         
         vals_str = vals_str[:-2] # Drop the last ', '
-            
-        stmt = ('INSERT OR REPLACE INTO {} '
+
+        if ignore:
+            stmt = ('INSERT OR IGNORE INTO {} '
                 'VALUES {}').format(table, vals_str)
+        else:
+            stmt = ('INSERT OR REPLACE INTO {} '
+                    'VALUES {}').format(table, vals_str)
         
         print(dbg_str + 'Insert statement: {}'.format(stmt))
         
