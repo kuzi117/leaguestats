@@ -125,4 +125,5 @@ class APIWrapper(metaclass=Singleton):
             print('An unkown error occured. Try again later?')
             return None
         else:
-            return result
+            # Return only the list of games
+            return result['games']
