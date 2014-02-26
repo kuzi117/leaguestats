@@ -21,7 +21,12 @@ class DBWrapper(metaclass=DatabaseSingleton):
         if not os.path.exists(self.filepath):
             os.makedirs(self.filepath)
 
-        self.conn = sqlite3.connect(self.filepath + os.path.sep + name + '.db')
+        self.conn = sqlite3.connect(self.filepath + os.path.sep + name + '.db',
+                                    detect_types=sqlite3.PARSE_DECLTYPES)
+
+        # Add converter for bool
+        sqlite3.register_adapter(bool, int)
+        sqlite3.register_converter("bool", lambda v: bool(int(v)))
     
     def exit(self):
         """
@@ -224,3 +229,4 @@ class DBWrapper(metaclass=DatabaseSingleton):
         
         # Commit
         self.conn.commit()
+
