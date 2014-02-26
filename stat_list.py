@@ -6,6 +6,8 @@ Having it organized here also makes it very easy to add to later (if more stats 
 they're organized.
 """
 
+primary_key = 'gameId'
+
 stats = (('assists', 'integer'),
          ('barracksKilled', 'integer'),
          ('championsKilled', 'integer'),
