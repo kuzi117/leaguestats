@@ -41,7 +41,7 @@ stats = (('assists', 'integer'),
          ('neutralMinionsKilled', 'integer'),
          ('neutralMinionsKilledEnemyJungle', 'integer'),
          ('neutralMinionsKilledYourJungle', 'integer'),
-         ('nexusKilled', 'text'),
+         ('nexusKilled', 'bool'),
          ('nodeCapture', 'integer'),
          ('nodeCaptureAssist', 'integer'),
          ('nodeNeutralize', 'integer'),
@@ -83,7 +83,7 @@ stats = (('assists', 'integer'),
          ('visionWardsBought', 'integer'),
          ('wardKilled', 'integer'),
          ('wardPlaced', 'integer'),
-         ('win', 'text'))
+         ('win', 'bool'))
 
 fellowPlayer = (('championId', 'integer'),
                 ('summonerId', 'integer'),
@@ -94,7 +94,7 @@ game = (('championId', 'integer'),
         ('gameId', 'integer'),
         ('gameMode', 'text'),
         ('gameType', 'text'),
-        ('invalid', 'text'),
+        ('invalid', 'bool'),
         ('level', 'integer'),
         ('mapId', 'integer'),
         ('spell1', 'integer'),
@@ -120,6 +120,21 @@ def game_db_fields():
     types += ttype
 
     return (names, types)
+
+def base_db_fields():
+    return _tuple_to_name_type(game)
+
+def fellow_player_db_fields():
+    names = []
+    types = []
+    for i in range(11):
+        tname, ttype = _tuple_to_name_type(fellowPlayer, prefix='fellowPlayer{}_'.format(i))
+        names += tname
+        types += ttype
+    return (names, types)
+
+def stats_db_fields():
+    return _tuple_to_name_type(stats, prefix='stats_')
 
 def _tuple_to_name_type(tuple_list, prefix='', suffix=''):
     """
