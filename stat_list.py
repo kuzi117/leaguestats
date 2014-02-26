@@ -133,8 +133,11 @@ def fellow_player_db_fields():
         types += ttype
     return (names, types)
 
-def stats_db_fields():
-    return _tuple_to_name_type(stats, prefix='stats_')
+def stats_db_fields(prefix=True):
+    if prefix:
+        return _tuple_to_name_type(stats, prefix='stats_')
+    else:
+        return _tuple_to_name_type(stats)
 
 def _tuple_to_name_type(tuple_list, prefix='', suffix=''):
     """
