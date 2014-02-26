@@ -14,7 +14,7 @@ def _get(region, version, url, payload={}, **args):
     """
     Generic get from Riot.
     
-    Returns an error code or the recieved object already converted to
+    Returns an error code or the received object already converted to
     usable form.
     """
     url = base_url.format(region, version) + url
@@ -100,13 +100,6 @@ class APIWrapper(metaclass=Singleton):
                 print(dbg_str + 'Summoners from server: {}'.format(result))
 
             return result
-
-    def summoner_by_name(self, name, region):
-        """
-        Gets a summoner by name. Delegates to summoners_by_name.
-        Returns the same way as summoner by name.
-        """
-        return self.summoners_by_name([name], region)
             
     def recent_games(self, sumid, region):
         """
@@ -116,7 +109,7 @@ class APIWrapper(metaclass=Singleton):
         if sumid == None or type(sumid) != int:
             return None
         
-        result = _get(1.3, 'game/by-summoner/{}/recent'.format(sumid))
+        result = _get(region, 1.3, 'game/by-summoner/{}/recent'.format(sumid))
         
         if result == NOT_FOUND:
             print('That name couldn\'t be found on this server.')
