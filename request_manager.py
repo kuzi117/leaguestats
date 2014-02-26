@@ -67,8 +67,23 @@ class RequestManager(metaclass = Singleton):
 
         return summoners
 
-    def recent_games(self, sumid, region):
-        return self.apiw.recent_games(sumid, region)
+    def recent_games(self, id, region, n=10):
+        """
+        Gets recent games for a summoner.
+
+        Returns n games if possible. If less games than requested are found then as many games as possible will be
+        returned.
+        """
+        games = self.apiw.recent_games(id, region)
+
+        # Save the games
+        self.datam.save_recent_games(id, region, games)
+
+        if n <= 10:
+            return games[:n]
+        # This is where adding games from the db will happen
+        else:
+            return games
 
     
         
