@@ -18,7 +18,6 @@ def main(debug = False):
         reqs.exit()
         stats.exit()
         print('Bye bye!')
-        raise
     except EOFError as e:
         print('\nClosing without saving... :(')
     
@@ -26,12 +25,18 @@ def test(reqs):
     """
     Function for testing functionality.
     """
-    name = input('Name: ')
+    name = input('Name: ').lower().replace(' ', '')
     if name == 'exit':
         sys.exit(0)
     
-    summoner = reqs.summoner_by_name(name, 'na')
-    print('\nRESULTS: {}'.format(summoner))
+    summoner = reqs.summoners_by_name([name], 'na')
+
+    # Try again
+    if summoner == None:
+        return
+
+    recents = reqs.recent_games(summoner[name]['id'], 'na')
+    print('Games loaded and saved.')
     
     print('\n\n')
     
