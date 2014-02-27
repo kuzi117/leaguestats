@@ -1,7 +1,9 @@
 from util import Singleton, dbg_str
 import db_wrapper
+import stat_list
 
 import datetime
+import copy
 
 class DataManager(metaclass=Singleton):
     """
@@ -13,6 +15,9 @@ class DataManager(metaclass=Singleton):
         # Database handle
         self.stat_db = db_wrapper.DBWrapper('stats',
                                             debug = self.debug)
+
+        self.recent_db = db_wrapper.DBWrapper('recent',
+                                              debug = self.debug)
         
         # How long should we cache for?
         self.summoner_expire_sec = 60 # 1 day
@@ -28,6 +33,7 @@ class DataManager(metaclass=Singleton):
         Prepares for exit.
         """
         self.stat_db.exit()
+        self.recent_db.exit()
 
     ### Get functions
     def summoners_by_name(self, names, region):
@@ -47,7 +53,7 @@ class DataManager(metaclass=Singleton):
         if rows:
             # Drop the cache date and standardized name from the end of 
             # the result so it's like riot's result
-            rows = {x[1]:
+            rows = {x[6]:
                     {'id': x[0],
                     'name': x[1],
                     'summonerLevel': x[2],
@@ -61,14 +67,7 @@ class DataManager(metaclass=Singleton):
             return rows
         else:
             return None
-
-    def summoner_by_name(self, name, region):
-        """
-        Gets a summoner by name. Delegates to summoners_by_name.
-        Returns the same way as summoner by name.
-        """
-        return self.summoners_by_name([name], region)
-
+        
     ### Save functions
     def save_summoners(self, summoners, region):
         """
@@ -93,9 +92,88 @@ class DataManager(metaclass=Singleton):
             val_list.append('datetime(\'now\')')
             
             values.append(tuple(val_list))
-        
+
         self.stat_db.insert_values('summoners', values)
-        
+
+    def save_recent_games(self, id, region, games):
+        """
+        Saves recent games for a summoner
+        """
+        if not self.recent_db.table_exists('{}_{}'.format(region, id)):
+            self.setup_recents(id, region)
+
+        if self.debug:
+            print(dbg_str + 'Saving recent games for {}_{}'.format(region, id))
+
+        # Must deep copy games, else popping things destroys the original
+        games = copy.deepcopy(games)
+
+        games = [(game, game.pop('fellowPlayers'), game.pop('stats')) for game in games]
+
+        # Default values for fields
+        default_vals = {'text':'',
+                        'bool': False,
+                        'integer': 0}
+
+        values = []
+        for game in games:
+            val_list = []
+
+            # Do base stats
+            names, types = stat_list.base_db_fields()
+            for i in range(len(names)):
+                # We have a value for this stat
+                if names[i] in game[0]:
+                    val_list.append(game[0][names[i]])
+                # Need a default value
+                else:
+                    # Default value for type
+                    val_list.append(default_vals[types[i]])
+
+            # This is an ugly solution, but it works.. for now
+            names, types = stat_list.fellow_player_db_fields()
+            for player in sorted(game[1], key = lambda x: x['teamId']):
+                if len(player) != 3:
+                    raise AssertionError('Fellow player was only {} long!'.format(len(player)))
+                val_list.append(player['championId'])
+                val_list.append(player['summonerId'])
+                val_list.append(player['teamId'])
+
+            # Add in missing players
+            for i in range(int((len(names)/3) - len(game[1]))):
+                val_list.append(None)
+                val_list.append(None)
+                val_list.append(None)
+
+
+            # Do base stats
+            names, types = stat_list.stats_db_fields(prefix=False)
+            for i in range(len(names)):
+                # We have a value for this stat
+                if names[i] in game[2]:
+                    val_list.append(game[2][names[i]])
+                # Need a default value
+                else:
+                    # Default value for type
+                    val_list.append(default_vals[types[i]])
+
+            # Convert all values into values acceptable by db
+            for i in range(len(val_list)):
+                if type(val_list[i]) == str:
+                    val_list[i] = '\'{}\''.format(val_list[i])
+                if type(val_list[i]) == bool:
+                    val_list[i] = int(val_list[i])
+                if val_list[i] == None:
+                    val_list[i] = 'null'
+
+
+
+            values.append(val_list)
+
+
+        self.recent_db.insert_values('{}_{}'.format(region, id), values, ignore=True)
+
+
     ### Setup functions
     def setup_summoners(self):
         """
@@ -122,7 +200,20 @@ class DataManager(metaclass=Singleton):
                  'integer')
         
         self.stat_db.create_table('summoners', names, types, 'id, region')
-    
+
+    def setup_recents(self, id, region):
+        """
+        Sets up the the table that holds recent games for a certain summoner in a region
+        """
+        if self.debug:
+            print(dbg_str + 'Setting up recent table for \'{}_{}\''.format(region, id))
+
+        names, types = stat_list.game_db_fields()
+        self.recent_db.create_table('{}_{}'.format(region, id),
+                                    names,
+                                    types,
+                                    stat_list.primary_key)
+
     ### Clean up functions
     def prune_summoners(self):
         """
@@ -151,15 +242,15 @@ class DataManager(metaclass=Singleton):
         
         if not remove:
             return
-        elif len(remove) == 1:
-            self.stat_db.delete_values('summoners',
-                                       ['standardName in {}'
-                                        .format('\'{}\''.format(remove[0]))
-                                       ])
         else:
+            # Generate csv of names
+            rm_str = '\'{}\'' + ', \'{}\'' * (len(remove)-1)
+            rm_str = rm_str.format(*remove)
+
+            # format rm_str into the condition statement
             self.stat_db.delete_values('summoners',
-                                       ['standardName in {}'
-                                        .format(tuple(remove))
+                                       ['standardName in ({})'
+                                        .format(rm_str)
                                        ])
         
         
