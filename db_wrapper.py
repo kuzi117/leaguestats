@@ -21,6 +21,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         if not os.path.exists(self.filepath):
             os.makedirs(self.filepath)
 
+        self.name = name
         self.conn = sqlite3.connect(self.filepath + os.path.sep + name + '.db',
                                     detect_types=sqlite3.PARSE_DECLTYPES)
 
@@ -33,8 +34,8 @@ class DBWrapper(metaclass=DatabaseSingleton):
         Prepares for exit.
         """
         if self.debug:
-            print(dbg_str + 'Closing stats db.')
-        
+            print(dbg_str + 'Closing {} db.'.format(self.name))
+
         self.conn.close()
         
     def table_exists(self, table_name):
