@@ -108,11 +108,10 @@ class DataManager(metaclass=Singleton):
         # Must deep copy games, else popping things destroys the original
         games = copy.deepcopy(games)
 
-        games = []
-        for game in games:
-            games.append((game,
-                          game.pop('fellowPlayers') if 'fellowPlayers' in game else {},
-                          game.pop('stats')))
+        games = [(game,
+                  game.pop('fellowPlayers') if 'fellowPlayers' in game else {},
+                  game.pop('stats'))
+                 for game in games]
 
         # Default values for fields
         default_vals = {'text':'',
@@ -170,10 +169,7 @@ class DataManager(metaclass=Singleton):
                 if val_list[i] == None:
                     val_list[i] = 'null'
 
-
-
             values.append(val_list)
-
 
         self.recent_db.insert_values('{}_{}'.format(region, id), values, ignore=True)
 
