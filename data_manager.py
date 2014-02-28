@@ -108,7 +108,11 @@ class DataManager(metaclass=Singleton):
         # Must deep copy games, else popping things destroys the original
         games = copy.deepcopy(games)
 
-        games = [(game, game.pop('fellowPlayers'), game.pop('stats')) for game in games]
+        games = []
+        for game in games:
+            games.append((game,
+                          game.pop('fellowPlayers') if 'fellowPlayers' in game else {},
+                          game.pop('stats')))
 
         # Default values for fields
         default_vals = {'text':'',
