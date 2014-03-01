@@ -25,18 +25,24 @@ def test(reqs):
     """
     Function for testing functionality.
     """
-    name = input('Name: ').lower().replace(' ', '')
-    if name == 'exit':
+    names = input('Name: ').lower().replace(' ', '').split(',')
+    if 'exit' in names:
         sys.exit(0)
     
-    summoner = reqs.summoners_by_name([name], 'na')
+    summoners = reqs.summoners_by_name(names, 'na')
 
     # Try again
-    if summoner == None:
+    if summoners == None:
         return
 
-    recents = reqs.recent_games(summoner[name]['id'], 'na')
-    print('Games loaded and saved.')
+    missing = []
+    for name in names:
+        if name in summoners:
+            reqs.recent_games(summoners[name]['id'], 'na')
+        else:
+            missing.append(name)
+
+    print('Games loaded and saved. Missing: {}'.format(names))
     
     print('\n\n')
     
