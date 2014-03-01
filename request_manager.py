@@ -2,6 +2,8 @@ import api_wrapper as api
 import data_manager as data
 from util import Singleton, dbg_str, wrn_str
 
+import copy
+
 
 class RequestManager(metaclass = Singleton):
     def __init__(self, **args):
@@ -27,6 +29,9 @@ class RequestManager(metaclass = Singleton):
         Returns as many as possible, both from local and server.
         If none found or a bad name is input None is returned
         """
+        # copy the list so we don't affect it
+        names = copy.copy(names)
+
         # Make sure all summoner names are acceptable
         if (True in [(name in [None, '']) for name in names] or
                     True in [(type(name) != str) for name in names] or
@@ -39,10 +44,14 @@ class RequestManager(metaclass = Singleton):
 
         # If we didn't find anything move on
         if summoners:
+            remove = []
             # If we already found a summoner remove them from the need to find list
             for name in names:
                 if name in summoners:
-                    names.remove(name)
+                    remove.append(name)
+
+            for rem in remove:
+                names.remove(rem)
 
         # If names left to find then request from server
         if names:
