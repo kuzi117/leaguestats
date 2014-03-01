@@ -97,7 +97,7 @@ class APIWrapper(metaclass=Singleton):
             return None
         else:
             if self.debug:
-                print(dbg_str + 'Summoners from server: {}'.format(result))
+                print(dbg_str + 'Summoners from server: {}'.format([name for name in result]))
 
             return result
             

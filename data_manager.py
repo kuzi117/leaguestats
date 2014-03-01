@@ -62,7 +62,7 @@ class DataManager(metaclass=Singleton):
                     } for x in rows}
                      
             if self.debug:
-                print(dbg_str + 'Summoners from db: {}'.format(rows))
+                print(dbg_str + 'Summoners from db: {}'.format([name for name in rows]))
             
             return rows
         else:
