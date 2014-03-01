@@ -42,7 +42,7 @@ def test(reqs):
         else:
             missing.append(name)
 
-    print('Games loaded and saved. Missing: {}'.format(names))
+    print('Games loaded and saved. Missing: {}'.format(missing))
     
     print('\n\n')
     
