@@ -1,7 +1,9 @@
-from util import dbg_str, DatabaseSingleton
+from util import DatabaseSingleton
+import logger
 
 import sqlite3
 import os
+
 
 class DBWrapper(metaclass=DatabaseSingleton):
     """
@@ -14,8 +16,6 @@ class DBWrapper(metaclass=DatabaseSingleton):
     """
     
     def __init__(self, name, **args):
-        self.debug = args.get('debug', False)
-
         # Create db filepath
         self.filepath = args.get('filepath', 'file') + os.path.sep
         if not os.path.exists(self.filepath):
@@ -28,13 +28,15 @@ class DBWrapper(metaclass=DatabaseSingleton):
         # Add converter for bool
         sqlite3.register_adapter(bool, int)
         sqlite3.register_converter("bool", lambda v: bool(int(v)))
+
+        # Logger
+        self.log = logger.Logger()
     
     def exit(self):
         """
         Prepares for exit.
         """
-        if self.debug:
-            print(dbg_str + 'Closing {} db.'.format(self.name))
+        self.log.log('Closing {} db.'.format(self.name))
 
         self.conn.close()
         
@@ -56,7 +58,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         one = cursor.fetchone()
         cursor.close()
         
-        if one != None:
+        if one is None:
             return True
         else:
             return False
@@ -78,7 +80,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         one = cursor.fetchone()
         cursor.close()
         
-        if one != None:
+        if one is None:
             return True
         else:
             return False
@@ -93,7 +95,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         # Ensure that all fields are typed
         if len(field_types) != len(field_names):
             raise AssertionError('Field types length doesn\'t match '
-                                  ' field names length!\n{}\n{}'.format(field_types, field_names))
+                                 ' field names length!\n{}\n{}'.format(field_types, field_names))
         # Ensure that primary field is there
         elif False in [(x in field_names) for x in primary_name.split(', ')]:
             raise AssertionError('Primary name not in field names!')
@@ -103,11 +105,10 @@ class DBWrapper(metaclass=DatabaseSingleton):
                 '{}'
                 'PRIMARY KEY ({}))')
 
-        
         # Format the table name, field format spaces and primary name
-        stmt= stmt.format(name,
-                          '{} {},' * len(field_names),
-                          primary_name)
+        stmt = stmt.format(name,
+                           '{} {},' * len(field_names),
+                           primary_name)
         
         # Create symbols list for formatting
         symbols = []
@@ -118,8 +119,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         # Format the field names and types
         stmt = stmt.format(*symbols)
 
-        if self.debug:
-            print(dbg_str + 'Create statement: {}'.format(stmt))
+        self.log.log('Create statement: {}'.format(stmt))
         
         curs = self.conn.cursor()
         
@@ -135,8 +135,8 @@ class DBWrapper(metaclass=DatabaseSingleton):
         SQL condition (e.g. "col_name = 100").
         """
         if conditions:
-            cond_str = '{}' + ' AND {}' * (len(conditions) -1)
-            col_str = '{}' + ', {}' * (len(col_names) -1)
+            cond_str = '{}' + ' AND {}' * (len(conditions) - 1)
+            col_str = '{}' + ', {}' * (len(col_names) - 1)
             
             # Format table name and extra format strings
             stmt = ('SELECT {} '
@@ -147,7 +147,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
             stmt = stmt.format(*(col_names + conditions))
             
         else:
-            col_str = '{}' + ', {}' * (len(col_names) -1)
+            col_str = '{}' + ', {}' * (len(col_names) - 1)
             
             # Format table name and condition format string
             stmt = ('SELECT {} '
@@ -155,9 +155,8 @@ class DBWrapper(metaclass=DatabaseSingleton):
             
             # Format conditions into format string
             stmt = stmt.format(*col_names)
-        
-        if self.debug:
-            print(dbg_str + 'Select statement: {}'.format(stmt))
+
+        self.log.log('Select statement: {}'.format(stmt))
         
         # Get cursor and execute the statement
         curs = self.conn.cursor()
@@ -179,7 +178,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         for val in values:
             # Create and format the string for each set of values to
             # insert
-            val_str = '(' + '{}' + ', {}' * (len(val) -1) + ')'
+            val_str = '(' + '{}' + ', {}' * (len(val) - 1) + ')'
             val_str = val_str.format(*val)
             
             # Append to list of sets of values
@@ -189,12 +188,12 @@ class DBWrapper(metaclass=DatabaseSingleton):
 
         if ignore:
             stmt = ('INSERT OR IGNORE INTO {} '
-                'VALUES {}').format(table, vals_str)
+                    'VALUES {}').format(table, vals_str)
         else:
             stmt = ('INSERT OR REPLACE INTO {} '
                     'VALUES {}').format(table, vals_str)
         
-        print(dbg_str + 'Insert statement: {}'.format(stmt))
+        self.log.log('Insert statement: {}'.format(stmt))
         
         # Execute the statement
         curs = self.conn.cursor()
@@ -208,7 +207,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         """
         
         if conditions:
-            cond_str = '{}' + ' AND {}' * (len(conditions) -1)
+            cond_str = '{}' + ' AND {}' * (len(conditions) - 1)
             
             # Format table name and extra format strings
             stmt = ('DELETE FROM {} '
@@ -219,10 +218,9 @@ class DBWrapper(metaclass=DatabaseSingleton):
             
         else:
             # Format table name format string
-            stmt = ('DELETE FROM {}').format(table)
-        
-        if self.debug:
-            print(dbg_str + 'Delete statement: {}'.format(stmt))
+            stmt = 'DELETE FROM {}'.format(table)
+
+        self.log.log('Delete statement: {}'.format(stmt))
         
         # Get cursor and execute the statement
         curs = self.conn.cursor()
@@ -230,4 +228,3 @@ class DBWrapper(metaclass=DatabaseSingleton):
         
         # Commit
         self.conn.commit()
-

@@ -1,6 +1,6 @@
+import logger
 import request_manager
 import stat_manager
-from util import dbg_str
 
 import sys
 
@@ -9,17 +9,21 @@ def main(debug = False):
     # Managers
     stats = stat_manager.StatManager(debug = debug)
     reqs = request_manager.RequestManager(debug = debug)
+
+    # Logger
+    log = logger.Logger()
+    log.log_level = 1 # Only set the log level, all other defaults are fine
     
     try:
         while True:
             test(reqs)
     except (KeyboardInterrupt, SystemExit) as e:
-        print('\nClosing up shop...')
+        log.log('Closing up shop...')
         reqs.exit()
         stats.exit()
-        print('Bye bye!')
+        log.log('Bye bye!')
     except EOFError as e:
-        print('\nClosing without saving... :(')
+        log.warn('\nClosing without saving... :(')
     
 def test(reqs):
     """
@@ -42,9 +46,7 @@ def test(reqs):
         else:
             missing.append(name)
 
-    print('Games loaded and saved. Missing: {}'.format(missing))
-    
-    print('\n\n')
+    logger.Logger().log('Games loaded and saved. Missing: {}'.format(missing))
     
 if __name__ == '__main__':
     debug = True

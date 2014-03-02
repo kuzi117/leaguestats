@@ -1,6 +1,7 @@
 import api_wrapper as api
 import data_manager as data
-from util import Singleton, dbg_str, wrn_str
+from util import Singleton
+import logger
 
 import copy
 
@@ -13,6 +14,9 @@ class RequestManager(metaclass = Singleton):
         # Wrappers to request from
         self.apiw = api.APIWrapper(debug = self.debug)
         self.datam = data.DataManager(debug = self.debug)
+
+        # Logger
+        self.log = logger.Logger()
 
     def exit(self):
         """
@@ -37,7 +41,7 @@ class RequestManager(metaclass = Singleton):
                     True in [(type(name) != str) for name in names] or
                     False in [(name.islower() and name.count(' ') == 0) for name in names]):
             if self.debug:
-                print(dbg_str + 'Bad summoner name. {}'.format(names))
+                self.log.log('Bad summoner name. {}'.format(names))
             return None
 
         summoners = self.datam.summoners_by_name(names, region)

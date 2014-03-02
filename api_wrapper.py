@@ -1,7 +1,5 @@
-from util import dbg_str
-from util import base_url
-from util import key
-from util import Singleton
+from util import base_url, key, Singleton
+import logger
 
 import requests as reqs
 
@@ -10,25 +8,26 @@ NOT_FOUND = 1
 CLIENT_ERROR = 2
 SERVER_ERROR = 3
 
-def _get(region, version, url, payload={}, **args):
+def _get(region, version, url, payload={}):
     """
     Generic get from Riot.
     
     Returns an error code or the received object already converted to
     usable form.
     """
+    # Logger
+    log = logger.Logger()
+
     url = base_url.format(region, version) + url
     
     # Print URL if debug is on
-    if args.get('debug', False):
-        print(dbg_str + 'REQUEST URL: ' + url)
+    log.log('REQUEST URL: ' + url)
     payload['api_key'] = key
 
     # Request
-    r = reqs.get(url, params = payload)
+    r = reqs.get(url, params=payload)
     
-    if args.get('debug', False):
-        print(dbg_str + 'RESPONSE STATUS CODE: {}'.format(r.status_code))
+    log.log('RESPONSE STATUS CODE: {}'.format(r.status_code))
     
     # All good
     if r.status_code == 200:
@@ -36,40 +35,31 @@ def _get(region, version, url, payload={}, **args):
         
     # Error codes
     elif r.status_code == 400:
-        if args.get('debug', False):
-            print(dbg_str + 'Internal error; bad request generated!')
+        log.log('Internal error; bad request generated!')
         return CLIENT_ERROR
     
     elif r.status_code == 401:
-        if args.get('debug', False):
-            print(dbg_str + 'Unauthorized request; bad key?')
+        log.log('Unauthorized request; bad key?')
         return CLIENT_ERROR
         
     elif r.status_code == 404:
-        if args.get('debug', False):
-            print(dbg_str + '{} not found on server!'
-                .format(args.get('not_found', 'Requested object')))
+        log.log('Requested object not found on server!')
         return NOT_FOUND
         
     elif r.status_code == 429:
-        if args.get('debug', False):
-            print(dbg_str + 'Too many requests!')
+        log.log('Too many requests!')
         return GENERIC_ERROR
     
     elif r.status_code == 500:
-        if args.get('debug', False):
-            print(dbg_str + 'Server error; generic error response!')
+        log.log('Server error; generic error response!')
         return SERVER_ERROR
     
     elif r.status_code == 503:
-        if args.get('debug', False):
-            print(dbg_str + 'Server error; service unavailable!')
+        log.log('Server error; service unavailable!')
         return SERVER_ERROR
     
     else:
-        if args.get('debug', False):
-            print(dbg_str + 'UNKNOWN STATUS CODE {} RETURNED!'
-                    .format(r.status_code))
+        log.log('UNKNOWN STATUS CODE {} RETURNED!'.format(r.status_code))
         return GENERIC_ERROR
 
 class APIWrapper(metaclass=Singleton):
@@ -77,9 +67,9 @@ class APIWrapper(metaclass=Singleton):
     A wrapper for Riot's developer API.
     """
     
-    def __init__(self, **args):
-        # Default things
-        self.debug = args.get('debug', False)
+    def __init__(self):
+        # Logger
+        self.log = logger.Logger()
     
     def summoners_by_name(self, names, region):
         """
@@ -91,25 +81,24 @@ class APIWrapper(metaclass=Singleton):
         name_str = "{}" + (",{}" * (len(names)-1))
         name_str = name_str.format(*names)
 
-        result = _get(region, 1.3, 'summoner/by-name/{}'.format(name_str), debug = self.debug)
+        result = _get(region, 1.3, 'summoner/by-name/{}'.format(name_str))
 
         if result in [NOT_FOUND, CLIENT_ERROR, SERVER_ERROR, GENERIC_ERROR]:
             return None
         else:
-            if self.debug:
-                print(dbg_str + 'Summoners from server: {}'.format([name for name in result]))
+            self.log.log('Summoners from server: {}'.format([name for name in result]))
 
             return result
             
-    def recent_games(self, sumid, region):
+    def recent_games(self, id, region):
         """
         Gets recent games by summoner id.
         """
         # Make sure summoner id
-        if sumid == None or type(sumid) != int:
+        if id is None or type(id) != int:
             return None
         
-        result = _get(region, 1.3, 'game/by-summoner/{}/recent'.format(sumid))
+        result = _get(region, 1.3, 'game/by-summoner/{}/recent'.format(id))
         
         if result == NOT_FOUND:
             print('That name couldn\'t be found on this server.')
@@ -118,11 +107,10 @@ class APIWrapper(metaclass=Singleton):
             print('There was a client error requesting recent games.')
             return None
         elif result == SERVER_ERROR:
-            print('There was a server error requesting recent games. '
-                   'Try again later?')
+            print('There was a server error requesting recent games. Try again later?')
             return None
         elif result == GENERIC_ERROR:
-            print('An unkown error occured. Try again later?')
+            print('An unknown error occurred. Try again later?')
             return None
         else:
             # Return only the list of games

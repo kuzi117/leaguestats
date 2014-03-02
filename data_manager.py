@@ -1,31 +1,32 @@
-from util import Singleton, dbg_str
+from util import Singleton
 import db_wrapper
 import stat_list
+import logger
 
 import datetime
 import copy
+
 
 class DataManager(metaclass=Singleton):
     """
     Class to manage data like summoners, recent games, etc.
     """
-    def __init__(self, **args):
-        self.debug = args.get('debug', False)
-        
+    def __init__(self):
         # Database handle
-        self.stat_db = db_wrapper.DBWrapper('stats',
-                                            debug = self.debug)
+        self.stat_db = db_wrapper.DBWrapper('stats')
 
-        self.recent_db = db_wrapper.DBWrapper('recent',
-                                              debug = self.debug)
+        self.recent_db = db_wrapper.DBWrapper('recent')
         
         # How long should we cache for?
         self.summoner_expire_sec = 60 # 1 day
+
+        # Logger
+        self.log = logger.Logger()
         
         if not self.stat_db.table_exists('summoners'):
             self.setup_summoners()
-        elif self.debug:
-            print(dbg_str + 'Summoners table already setup.')
+        else:
+            self.log.log('Summoners table already setup.')
             self.prune_summoners()
     
     def exit(self):
@@ -47,8 +48,8 @@ class DataManager(metaclass=Singleton):
 
         rows = self.stat_db.select_values('summoners',
                                           ['*'],
-                                          ['standardName in {}'
-                                          .format(name_str)])
+                                          ['standardName in {}'.format(name_str),
+                                           'region = \'{}\''.format(region)])
 
         if rows:
             # Drop the cache date and standardized name from the end of 
@@ -59,10 +60,9 @@ class DataManager(metaclass=Singleton):
                     'summonerLevel': x[2],
                     'profileIconId': x[3],
                     'revisionDate': x[4]
-                    } for x in rows}
-                     
-            if self.debug:
-                print(dbg_str + 'Summoners from db: {}'.format([name for name in rows]))
+                     } for x in rows}
+
+            self.log.log('Summoners from db: {}'.format([name for name in rows]))
             
             return rows
         else:
@@ -84,13 +84,13 @@ class DataManager(metaclass=Singleton):
             val_list.append(summoner['summonerLevel'])
             val_list.append(summoner['profileIconId'])
             val_list.append(summoner['revisionDate'])
-                            
+
             # Add region, cache date and standardized name
             val_list.append('\'{}\''.format(region))
             val_list.append('\'{}\''.format(summoner['name']
-                                .lower().replace(' ', '')))
+                                            .lower().replace(' ', '')))
             val_list.append('datetime(\'now\')')
-            
+
             values.append(tuple(val_list))
 
         self.stat_db.insert_values('summoners', values)
@@ -102,8 +102,7 @@ class DataManager(metaclass=Singleton):
         if not self.recent_db.table_exists('{}_{}'.format(region, id)):
             self.setup_recents(id, region)
 
-        if self.debug:
-            print(dbg_str + 'Saving recent games for {}_{}'.format(region, id))
+        self.log.log('Saving recent games for {}_{}'.format(region, id))
 
         # Must deep copy games, else popping things destroys the original
         games = copy.deepcopy(games)
@@ -114,7 +113,7 @@ class DataManager(metaclass=Singleton):
                  for game in games]
 
         # Default values for fields
-        default_vals = {'text':'',
+        default_vals = {'text': '',
                         'bool': False,
                         'integer': 0}
 
@@ -135,7 +134,7 @@ class DataManager(metaclass=Singleton):
 
             # This is an ugly solution, but it works.. for now
             names, types = stat_list.fellow_player_db_fields()
-            for player in sorted(game[1], key = lambda x: x['teamId']):
+            for player in sorted(game[1], key=lambda x: x['teamId']):
                 if len(player) != 3:
                     raise AssertionError('Fellow player was only {} long!'.format(len(player)))
                 val_list.append(player['championId'])
@@ -147,7 +146,6 @@ class DataManager(metaclass=Singleton):
                 val_list.append(None)
                 val_list.append(None)
                 val_list.append(None)
-
 
             # Do base stats
             names, types = stat_list.stats_db_fields(prefix=False)
@@ -166,21 +164,19 @@ class DataManager(metaclass=Singleton):
                     val_list[i] = '\'{}\''.format(val_list[i])
                 if type(val_list[i]) == bool:
                     val_list[i] = int(val_list[i])
-                if val_list[i] == None:
+                if val_list[i] is None:
                     val_list[i] = 'null'
 
             values.append(val_list)
 
         self.recent_db.insert_values('{}_{}'.format(region, id), values, ignore=True)
 
-
     ### Setup functions
     def setup_summoners(self):
         """
         Sets up the table that holds summoner info.
         """
-        if self.debug:
-            print(dbg_str + 'Setting up summoners table.')
+        self.log.log('Setting up summoners table.')
         
         names = ('id',
                  'name',
@@ -205,8 +201,7 @@ class DataManager(metaclass=Singleton):
         """
         Sets up the the table that holds recent games for a certain summoner in a region
         """
-        if self.debug:
-            print(dbg_str + 'Setting up recent table for \'{}_{}\''.format(region, id))
+        self.log.log('Setting up recent table for \'{}_{}\''.format(region, id))
 
         names, types = stat_list.game_db_fields()
         self.recent_db.create_table('{}_{}'.format(region, id),
