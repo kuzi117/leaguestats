@@ -23,8 +23,11 @@ class Logger(metaclass=Singleton):
         If these need to be changed then use the accessors provided.
         """
         self._log_level = 0
-        self._file_path = os.getcwd()
         self._file_name = datetime.datetime.now().strftime('%Y-%m-%d-%H.%M') + '.log'
+        self._file_path = os.getcwd() + os.path.sep + 'log'
+
+        if not os.path.exists(self._file_path):
+            os.makedirs(self._file_path)
 
         self._max_log_level = 2
 
