@@ -14,26 +14,55 @@ class Logger(metaclass=Singleton):
         1 = To log file
         2 = To terminal
 
-    Log file defaults to cwd and "date.log"
+    Log file defaults to cwd and "{datetime}.log"
     """
 
-    def __init__(self,
-                 level = 0,
-                 file_name=datetime.datetime.now().strftime('%Y-%m-%d-%H.%M.%S'),
-                 file_path=os.getcwd()):
-        if level < 0:
+    def __init__(self):
+        """
+        Initializes basic things log level, filepath, and filename.
+
+        If these need to be changed then use the accessors provided.
+        """
+        self._log_level = 0
+        self._file_path = os.getcwd()
+        self._file_name = file_name + '.log'
+
+        self._max_log_level = 2
+
+    @property
+    def file_path(self):
+        return self._file_path
+
+    @file_path.setter
+    def file_path(self, path):
+        if not os.path.exists(path):
+            self.warn('Attempted to set log file path to invalid path. ({})'.format(path))
+            return
+
+        self._file_path = path
+
+    @property
+    def file_name(self):
+        return self._file_name
+
+    @file_name.setter
+    def file_name(self, name):
+        self._file_name = name + '.log'
+
+    @property
+    def log_level(self):
+        return self._log_level
+
+    @log_level.setter
+    def log_level(self, level):
+        if level > self._max_log_level:
+            self.warn('Attempted to set log level to invalid level. ({})'.format(level))
+            self._log_level = self._max_log_level
+        elif level < 0:
+            self.warn('Attempted to set log level to invalid level. ({})'.format(level))
             self._log_level = 0
-        elif level > 2:
-            self._log_level = 2
         else:
             self._log_level = level
-
-        if not os.path.exists(file_path):
-            self._file_path = os.getcwd()
-        else:
-            self._file_path = file_path
-
-        self._file_name = file_name + '.log'
 
     def log(self, message):
         """
