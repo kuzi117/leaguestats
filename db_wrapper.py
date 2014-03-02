@@ -58,7 +58,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         one = cursor.fetchone()
         cursor.close()
         
-        if one is None:
+        if one is not None:
             return True
         else:
             return False
@@ -80,7 +80,7 @@ class DBWrapper(metaclass=DatabaseSingleton):
         one = cursor.fetchone()
         cursor.close()
         
-        if one is None:
+        if one is not None:
             return True
         else:
             return False
