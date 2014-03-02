@@ -3,7 +3,6 @@ from util import Singleton
 import datetime
 import os
 
-_wrn_str = 'WARNING: '
 
 class Logger(metaclass=Singleton):
     """
@@ -25,7 +24,7 @@ class Logger(metaclass=Singleton):
         """
         self._log_level = 0
         self._file_path = os.getcwd()
-        self._file_name = file_name + '.log'
+        self._file_name = datetime.datetime.now().strftime('%Y-%m-%d-%H.%M') + '.log'
 
         self._max_log_level = 2
 
@@ -144,9 +143,3 @@ class Logger(metaclass=Singleton):
         else:
             # Print for now, will become more sophisticated when app leaves CL
             print(err_str + 'Bad log level, error message requested ({})!'.format(message))
-
-
-
-
-
-
