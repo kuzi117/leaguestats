@@ -19,8 +19,7 @@ def _get(region, version, url, payload={}):
     log = logger.Logger()
 
     url = base_url.format(region, version) + url
-    
-    # Print URL if debug is on
+
     log.log('REQUEST URL: ' + url)
     payload['api_key'] = key
 

@@ -4,11 +4,11 @@ import stat_manager
 
 import sys
 
-def main(debug = False):
+def main():
     
     # Managers
-    stats = stat_manager.StatManager(debug = debug)
-    reqs = request_manager.RequestManager(debug = debug)
+    stats = stat_manager.StatManager()
+    reqs = request_manager.RequestManager()
 
     # Logger
     log = logger.Logger()
@@ -49,5 +49,4 @@ def test(reqs):
     logger.Logger().log('Games loaded and saved. Missing: {}'.format(missing))
     
 if __name__ == '__main__':
-    debug = True
-    main(debug)
+    main()

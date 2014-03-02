@@ -1,10 +1,9 @@
 import db_wrapper
 
 class StatManager():
-    def __init__(self, debug = False):
-        self.debug = debug
+    def __init__(self):
         
-        self.db = db_wrapper.DBWrapper('stats', debug = debug)
+        self.db = db_wrapper.DBWrapper('stats')
     
     def exit(self):
         """

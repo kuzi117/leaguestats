@@ -6,14 +6,11 @@ import logger
 import copy
 
 
-class RequestManager(metaclass = Singleton):
-    def __init__(self, **args):
-        # Default things
-        self.debug = args.get('debug', False)
-
+class RequestManager(metaclass=Singleton):
+    def __init__(self):
         # Wrappers to request from
-        self.apiw = api.APIWrapper(debug = self.debug)
-        self.datam = data.DataManager(debug = self.debug)
+        self.apiw = api.APIWrapper()
+        self.datam = data.DataManager()
 
         # Logger
         self.log = logger.Logger()
@@ -40,8 +37,7 @@ class RequestManager(metaclass = Singleton):
         if (True in [(name in [None, '']) for name in names] or
                     True in [(type(name) != str) for name in names] or
                     False in [(name.islower() and name.count(' ') == 0) for name in names]):
-            if self.debug:
-                self.log.log('Bad summoner name. {}'.format(names))
+            self.log.log('Bad summoner name. {}'.format(names))
             return None
 
         summoners = self.datam.summoners_by_name(names, region)
@@ -97,6 +93,3 @@ class RequestManager(metaclass = Singleton):
         # This is where adding games from the db will happen
         else:
             return games
-
-    
-        
