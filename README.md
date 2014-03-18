@@ -7,5 +7,5 @@ Features:
 * Soon (TM)
 
 Dependencies:
-requests
-
+* requests
+* kivy (not pushed yet)
