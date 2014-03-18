@@ -1,12 +1,12 @@
 import api_wrapper as api
 import data_manager as data
-from util import Singleton
+from util import ThreadSingleton
 import logger
 
 import copy
 
 
-class RequestManager(metaclass=Singleton):
+class RequestManager(metaclass=ThreadSingleton):
     def __init__(self):
         # Wrappers to request from
         self.apiw = api.APIWrapper()

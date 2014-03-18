@@ -1,4 +1,4 @@
-from util import Singleton
+from util import ThreadSingleton
 import db_wrapper
 import stat_list
 import logger
@@ -7,7 +7,7 @@ import datetime
 import copy
 
 
-class DataManager(metaclass=Singleton):
+class DataManager(metaclass=ThreadSingleton):
     """
     Class to manage data like summoners, recent games, etc.
     """
