@@ -6,7 +6,6 @@ key = 'b327abf7-c1ef-4b97-acce-5528d97d1437'
 class Singleton(type):
     instance = None
     def __call__(cls, *args, **kw):
-        print('Singleton {}'.format(cls.__name__))
         if not cls.instance:
              cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
@@ -20,12 +19,8 @@ class KeySingleton(type):
     def __call__(cls, key, *args, **kw):
         if cls.__name__ not in cls.instances:
             cls.instances[cls.__name__] = {key: super(KeySingleton, cls).__call__(*args, **kw)}
-            print('Key singleton ({}, {}), first of class'.format(cls.__name__, key))
         elif key not in cls.instances[cls.__name__]:
             cls.instances[cls.__name__][key] = super(KeySingleton, cls).__call__(*args, **kw)
-            print('Key singleton ({}, {}), more of class'.format(cls.__name__, key))
-        else:
-            print('Key singleton ({}, {}), reusing'.format(cls.__name__, key))
         return cls.instances[cls.__name__][key]
 
 
