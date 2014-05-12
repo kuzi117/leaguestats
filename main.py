@@ -22,7 +22,7 @@ def main():
         while True:
             test(reqs, sched)
     except (KeyboardInterrupt, SystemExit) as e:
-        log.log('Closing up shop...')
+        log.log('\nClosing up shop...')
         reqs.exit()
         stats.exit()
         sched.exit()
