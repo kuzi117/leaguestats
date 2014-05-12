@@ -81,9 +81,15 @@ class UpdateGamesThread(threading.Thread):
         self.reqs = request_manager.RequestManager()
         self.log = logger.Logger()
 
+        first = True
+
         while not self.finished.is_set():
-            # Wait
-            self.finished.wait(self.interval)
+            # Wait, first time only for 5 seconds
+            if first:
+                first = False
+                self.finished.wait(5)
+            else:
+                self.finished.wait(self.interval)
 
             # If still good
             if not self.finished.is_set():
