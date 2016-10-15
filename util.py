@@ -1,7 +1,7 @@
 import threading
 
-base_url = 'https://prod.api.pvp.net/api/lol/{}/v{}/' # region, v. num.
-key = 'b327abf7-c1ef-4b97-acce-5528d97d1437'
+base_url = 'https://{}.api.pvp.net/api/lol/{}/v{}/' # region, region, v. num.
+key = '33bbdc99-d0ee-426a-ba0f-21297aeee69e'
 
 class Singleton(type):
     instance = None

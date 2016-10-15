@@ -18,7 +18,7 @@ def _get(region, version, url, payload={}):
     # Logger
     log = logger.Logger()
 
-    url = base_url.format(region, version) + url
+    url = base_url.format(region, region, version) + url
 
     log.log('REQUEST URL: ' + url)
     payload['api_key'] = key
@@ -80,7 +80,7 @@ class APIWrapper(metaclass=Singleton):
         name_str = "{}" + (",{}" * (len(names)-1))
         name_str = name_str.format(*names)
 
-        result = _get(region, 1.3, 'summoner/by-name/{}'.format(name_str))
+        result = _get(region, 1.4, 'summoner/by-name/{}'.format(name_str))
 
         if result in [NOT_FOUND, CLIENT_ERROR, SERVER_ERROR, GENERIC_ERROR]:
             return None
